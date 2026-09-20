@@ -1,0 +1,14 @@
+node_modules
+dist
+data
+secrets
+coverage
+.env
+.env.*
+!.env.example
+*.log
+.git
+.gitignore
+.DS_Store
+test
+scripts

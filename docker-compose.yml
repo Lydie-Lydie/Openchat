@@ -1,0 +1,44 @@
+services:
+  opencode:
+    build: .
+    image: user-bot:latest
+    command:
+      ["opencode", "serve", "--hostname", "0.0.0.0", "--port", "4096"]
+    working_dir: /workspace
+    environment:
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD}
+      TZ: ${TZ:-Asia/Seoul}
+    volumes:
+      - ./secrets/opencode:/root/.local/share/opencode
+      - ./data/opencode-workspace:/workspace
+    expose:
+      - "4096"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:4096/global/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  bot:
+    build: .
+    image: user-bot:latest
+    command: ["node", "dist/index.js"]
+    depends_on:
+      opencode:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      OPENCODE_BASE_URL: http://opencode:4096
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD}
+      DB_PATH: /app/data/user.db
+      TZ: ${TZ:-Asia/Seoul}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

@@ -1,0 +1,23 @@
+[Unit]
+Description=user Discord bot
+After=network-online.target user-opencode.service
+Wants=network-online.target user-opencode.service
+
+[Service]
+Type=simple
+User=user
+Group=user
+WorkingDirectory=/opt/user
+EnvironmentFile=/etc/user/user.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node /opt/user/dist/index.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+# RHEL/Rocky: systemd 기본 도메인(init_t) 제한 회피
+SELinuxContext=system_u:system_r:unconfined_service_t:s0
+
+[Install]
+WantedBy=multi-user.target

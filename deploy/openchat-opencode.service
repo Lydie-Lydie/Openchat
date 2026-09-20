@@ -1,0 +1,23 @@
+[Unit]
+Description=OpenCode headless server (user)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=user
+Group=user
+WorkingDirectory=/opt/user/workspace
+EnvironmentFile=/etc/user/user.env
+Environment=HOME=/home/user
+ExecStart=/usr/local/bin/opencode serve --hostname 127.0.0.1 --port 4096
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+# RHEL/Rocky: systemd 기본 도메인(init_t)은 아웃바운드 연결과 JIT를 막는다.
+SELinuxContext=system_u:system_r:unconfined_service_t:s0
+
+[Install]
+WantedBy=multi-user.target
