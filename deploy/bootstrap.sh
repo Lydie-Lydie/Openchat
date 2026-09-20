@@ -2,11 +2,11 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-user_USER="${user_USER:-user}"
-user_HOME="/home/${user_USER}"
-APP_DIR="/opt/user"
-CONF_DIR="/etc/user"
-ENV_FILE="${CONF_DIR}/user.env"
+APP_USER="${APP_USER:-openchat}"
+user_HOME="/home/${APP_USER}"
+APP_DIR="/opt/openchat"
+CONF_DIR="/etc/openchat"
+ENV_FILE="${CONF_DIR}/openchat.env"
 OPENCODE_VERSION="${OPENCODE_VERSION:-1.18.31}"
 NODE_MAJOR="${NODE_MAJOR:-24}"
 SWAP_SIZE="${SWAP_SIZE:-2G}"
@@ -66,15 +66,15 @@ hash -r
 ok "node $(node -v) / npm $(npm -v)"
 
 log "5/9 사용자 및 디렉터리"
-if ! id -u "$user_USER" >/dev/null 2>&1; then
-  useradd -m -d "$user_HOME" -s /bin/bash "$user_USER"
+if ! id -u "$APP_USER" >/dev/null 2>&1; then
+  useradd -m -d "$user_HOME" -s /bin/bash "$APP_USER"
 fi
 mkdir -p "$APP_DIR" "$CONF_DIR" "$APP_DIR/workspace" "$APP_DIR/data"
 mkdir -p "$user_HOME/.local/share" "$user_HOME/.local/state" "$user_HOME/.cache" "$user_HOME/.config"
-chown -R "$user_USER:$user_USER" "$APP_DIR" "$user_HOME"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR" "$user_HOME"
 chmod 700 "$user_HOME" "$user_HOME/.local" "$user_HOME/.local/state"
 if command -v restorecon >/dev/null 2>&1; then restorecon -R "$user_HOME" >/dev/null 2>&1 || true; fi
-ok "$user_USER / $APP_DIR"
+ok "$APP_USER / $APP_DIR"
 
 log "6/9 OpenCode CLI"
 if ! /usr/local/bin/opencode --version >/dev/null 2>&1; then
@@ -90,8 +90,8 @@ done
 rm -rf "$APP_DIR/src" "$APP_DIR/scripts"
 cp -r "$REPO_DIR/src" "$APP_DIR/src"
 cp -r "$REPO_DIR/scripts" "$APP_DIR/scripts"
-chown -R "$user_USER:$user_USER" "$APP_DIR"
-sudo -u "$user_USER" -H env "PATH=/usr/local/bin:/usr/bin:/bin" bash -c \
+chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+sudo -u "$APP_USER" -H env "PATH=/usr/local/bin:/usr/bin:/bin" bash -c \
   "cd '$APP_DIR' && npm ci --no-audit --no-fund >/dev/null && NODE_OPTIONS=--max-old-space-size=512 npm run build >/dev/null"
 ok "빌드 완료"
 
@@ -117,23 +117,23 @@ if [ -z "$PW" ]; then
 fi
 set_env OPENCODE_SERVER_PASSWORD "$PW"
 set_env OPENCODE_BASE_URL "http://127.0.0.1:4096"
-set_env DB_PATH "$APP_DIR/data/user.db"
+set_env DB_PATH "$APP_DIR/data/openchat.db"
 set_env NODE_ENV "production"
 chmod 600 "$ENV_FILE"
 chown root:root "$ENV_FILE"
 ok "$ENV_FILE 준비"
 
 if [ -n "${user_AUTH_JSON:-}" ] && [ -f "${user_AUTH_JSON}" ]; then
-  install -d -o "$user_USER" -g "$user_USER" -m 700 "$user_HOME/.local/share/opencode"
-  install -o "$user_USER" -g "$user_USER" -m 600 "$user_AUTH_JSON" \
+  install -d -o "$APP_USER" -g "$APP_USER" -m 700 "$user_HOME/.local/share/opencode"
+  install -o "$APP_USER" -g "$APP_USER" -m 600 "$user_AUTH_JSON" \
     "$user_HOME/.local/share/opencode/auth.json"
   ok "auth.json 복사"
 fi
 
 log "9/9 systemd 및 SELinux"
-cp "$REPO_DIR/deploy/user-opencode.service" "$REPO_DIR/deploy/user-bot.service" /etc/systemd/system/
+cp "$REPO_DIR/deploy/openchat-opencode.service" "$REPO_DIR/deploy/openchat-bot.service" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable user-opencode user-bot >/dev/null 2>&1 || true
+systemctl enable openchat-opencode openchat-bot >/dev/null 2>&1 || true
 
 if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" = "Enforcing" ]; then
   # 유닛의 SELinuxContext=unconfined_service_t 가 동작하려면

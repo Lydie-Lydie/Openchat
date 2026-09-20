@@ -306,7 +306,7 @@ const resolveSendFn = async (
   if (typeof message.startThread === "function") {
     try {
       const thread = await message.startThread({
-        name: `hiro · ${message.author.username}`.slice(0, 90),
+        name: `${config.botName} · ${message.author.username}`.slice(0, 90),
         autoArchiveDuration: 1440,
       });
       logger.debug({ threadId: thread.id }, "created thread for mention reply");

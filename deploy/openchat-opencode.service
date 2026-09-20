@@ -1,15 +1,15 @@
 [Unit]
-Description=OpenCode headless server (user)
+Description=OpenCode headless server (openchat)
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=user
-Group=user
-WorkingDirectory=/opt/user/workspace
-EnvironmentFile=/etc/user/user.env
-Environment=HOME=/home/user
+User=openchat
+Group=openchat
+WorkingDirectory=/opt/openchat/workspace
+EnvironmentFile=/etc/openchat/openchat.env
+Environment=HOME=/home/openchat
 ExecStart=/usr/local/bin/opencode serve --hostname 127.0.0.1 --port 4096
 Restart=always
 RestartSec=5

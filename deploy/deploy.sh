@@ -8,7 +8,7 @@ set -euo pipefail
 # node_modules/dist/data/secrets/.env 는 제외되어 보호된다.
 
 HOST="${user_HOST:-}"
-REMOTE_DIR="${user_REMOTE_DIR:-/root/user}"
+REMOTE_DIR="${user_REMOTE_DIR:-/root/openchat}"
 
 if [ -z "$HOST" ]; then
   printf 'usage: user_HOST=user@server bash deploy/deploy.sh\n' >&2

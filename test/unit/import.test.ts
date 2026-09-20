@@ -15,7 +15,7 @@ describe("importFromPath", () => {
   let dir: string;
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "user-import-"));
+    dir = mkdtempSync(join(tmpdir(), "openchat-import-"));
   });
 
   afterEach(() => {

@@ -1,4 +1,4 @@
-# user
+# openchat
 
 개인 Discord 서버용 **말투 학습 챗봇**. 지정한 사용자(`SELF_USER_ID`)의 메시지를 수집해 말투·페르소나를 학습하고, 멘션에 그 사람의 말투로 답합니다. 모델 호출은 **OpenCode headless 서버**(`opencode serve`)를 게이트웨이로 사용합니다.
 
@@ -13,7 +13,7 @@
 - **페르소나**: 수동 `data/persona.md` + 자동 추출 `data/persona.auto.md`(말투 분석 시 함께 생성).
 - **자동 발화**(선택): 채널별 스케줄러, dry-run/조용시간/최소간격/일일한도.
 - **반복 방지**: 최근 답변을 프롬프트에 넣고 유사도 검사로 중복 시 재생성.
-- **사용자별 호칭**: `/hiro callme`로 봇이 부르는 이름 지정.
+- **사용자별 호칭**: `/openchat callme`로 봇이 부르는 이름 지정.
 - **채널 기능 분리**: 수집과 자동 발화를 채널별로 개별 ON/OFF, 포럼/스레드 지원.
 
 ## 요구사항
@@ -55,6 +55,8 @@ npm run lexicon
 
 | 변수 | 설명 |
 |---|---|
+| `BOT_NAME` | 봇/세션/스레드에 표시되는 이름(기본 `openchat`) |
+| `COMMAND_NAME` | 슬래시 명령 이름(기본 `openchat`) |
 | `DISCORD_TOKEN`, `DISCORD_APP_ID` | 봇 토큰/애플리케이션 ID |
 | `SELF_USER_ID` | **학습 대상** 사용자 ID (이 사람의 메시지만 수집) |
 | `ADMIN_USER_IDS` | 관리자 ID(쉼표 구분) |
@@ -74,19 +76,19 @@ npm run lexicon
 
 ## 명령
 
-관리자 명령은 `/hiro`입니다. (`/hiro callme`은 모든 사용자)
+관리자 명령은 `/openchat`입니다. (`/openchat callme`은 모든 사용자)
 
 ```
-/hiro status
-/hiro set-channel channel:#채널 collector:true spontaneous:false   # 기능 개별 제어
-/hiro channels
-/hiro enable-channel / disable-channel                            # 수집+자동발화 일괄
-/hiro set-interval minutes:60
-/hiro tick                                                        # 즉시 1회 실행(현재 채널)
-/hiro dryrun enabled:true
-/hiro rebuild-memory / reset-memory / style-guilds                 # 학습 명령(학습 ON일 때)
-/hiro callme name:호칭
-/hiro forget confirm:true / purge-sensitive
+/openchat status
+/openchat set-channel channel:#채널 collector:true spontaneous:false   # 기능 개별 제어
+/openchat channels
+/openchat enable-channel / disable-channel                            # 수집+자동발화 일괄
+/openchat set-interval minutes:60
+/openchat tick                                                        # 즉시 1회 실행(현재 채널)
+/openchat dryrun enabled:true
+/openchat rebuild-memory / reset-memory / style-guilds                 # 학습 명령(학습 ON일 때)
+/openchat callme name:호칭
+/openchat forget confirm:true / purge-sensitive
 ```
 
 ## 스크립트
@@ -121,5 +123,12 @@ test/                   # vitest
 ## 데이터 · 프라이버시
 
 - 수집기는 `SELF_USER_ID`의 메시지만 저장합니다.
-- 런타임 데이터는 `data/`(DB, `lexicon.json`, `persona*.md`)와 `/etc/user/user.env`에 두며, 모두 git에서 제외됩니다.
+- 런타임 데이터는 `data/`(DB, `lexicon.json`, `persona*.md`)와 `/etc/openchat/openchat.env`에 두며, 모두 git에서 제외됩니다.
 - `.env`, `auth.json`, `data/`, `secrets/`는 절대 커밋하지 마세요.
+
+## 라이선스
+
+Apache License 2.0. 전체 내용은 `LICENSE`, 저작자 표시는 `NOTICE`를 참고하세요.
+
+- 저작권: Copyright 2026 openchat
+- 요구사항: 저작권 고지와 `NOTICE`를 유지하고, **변경한 경우 변경 사실을 명시**해야 합니다(Apache-2.0 제4조).

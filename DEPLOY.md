@@ -1,6 +1,6 @@
-# user 배포 가이드
+# openchat 배포 가이드
 
-Discord 봇(`user`)과 OpenCode headless 서버를 다른 서버에서 운영하는 방법입니다.
+Discord 봇(`openchat`)과 OpenCode headless 서버를 다른 서버에서 운영하는 방법입니다.
 Docker 방식과 systemd 방식 두 가지를 다룹니다.
 
 ## 사전 준비 (공통)
@@ -124,7 +124,7 @@ STYLE_CHANNEL_IDS=<STYLE_CHANNEL_ID>
 말투 프로필 초기화 후 재생성은 Discord에서:
 
 ```text
-/hiro reset-memory
+/openchat reset-memory
 ```
 
 ### 서버 커스텀 이모지
@@ -150,11 +150,11 @@ EMOJI_MAX=30
 | 시점 | 동작 |
 |---|---|
 | 봇 시작 | 모든 허용 서버의 이모지를 조회해 캐시 |
-| `/hiro reset-memory` | 말투 초기화와 함께 이모지 목록도 새로고침 |
-| `/hiro refresh-emojis` | 수동 새로고침 |
+| `/openchat reset-memory` | 말투 초기화와 함께 이모지 목록도 새로고침 |
+| `/openchat refresh-emojis` | 수동 새로고침 |
 | 유지보수 주기(6시간) | 최신 이모지 목록으로 갱신 |
 
-이모지를 새로 추가한 뒤에는 `/hiro refresh-emojis` 를 실행하면 재시작 없이 반영됩니다.
+이모지를 새로 추가한 뒤에는 `/openchat refresh-emojis` 를 실행하면 재시작 없이 반영됩니다.
 
 말투 샘플은 `isChatLike` 필터(`src/safety/filters.ts`)를 통과한 메시지만 사용합니다.
 다음은 자동 제외됩니다.
@@ -183,7 +183,7 @@ SEED_PAGES=5 npx tsx scripts/discord-seed.ts
 SEED_ALL_CHANNELS=1 SEED_PAGES=10 npx tsx scripts/discord-seed.ts
 ```
 
-샘플 수는 `/hiro status`의 `수집 메시지`와 스타일 프로필 로그(`samples=`)로 확인할 수 있습니다. 대화형 메시지가 6건 미만이면 프로필은 생성되지 않습니다.
+샘플 수는 `/openchat status`의 `수집 메시지`와 스타일 프로필 로그(`samples=`)로 확인할 수 있습니다. 대화형 메시지가 6건 미만이면 프로필은 생성되지 않습니다.
 
 ### 캐릭터 대본 모드 (말투 학습 비활성화)
 
@@ -195,9 +195,9 @@ STYLE_GUILD_IDS=<서버_ID>
 STYLE_CHANNEL_IDS=<대본_채널_ID>
 ```
 
-- 스타일 프로필 재생성(유지보수 주기·`/hiro rebuild-memory`)이 실행되지 않습니다.
+- 스타일 프로필 재생성(유지보수 주기·`/openchat rebuild-memory`)이 실행되지 않습니다.
 - 프롬프트에서 `[말투 요약]`을 빼고 `[말투 예시]`(대본 샘플)만 넣습니다.
-- 말투 학습 관련 명령(`/hiro rebuild-memory`, `/hiro reset-memory`, `/hiro style-guilds`)은 Discord 명령 목록에서 숨겨집니다.
+- 말투 학습 관련 명령(`/openchat rebuild-memory`, `/openchat reset-memory`, `/openchat style-guilds`)은 Discord 명령 목록에서 숨겨집니다.
 - 대본 주입은 `scripts/inject-dialogue.ts`로 수행합니다.
 
 ### 고정 페르소나 (항상 프롬프트에 포함)
@@ -243,7 +243,7 @@ npm run lexicon
 
 ```bash
 uv run --python 3.12 --with kiwipiepy python scripts/lexicon.py \
-  --db data/user.db --channels <대본채널ID> --out data/lexicon.json
+  --db data/openchat.db --channels <대본채널ID> --out data/lexicon.json
 ```
 
 - 결과는 `LEXICON_PATH`(기본 `./data/lexicon.json`)에 저장되고, 봇이 시작/프롬프트 생성 시 읽습니다(파일 mtime 기준 캐시).
@@ -254,7 +254,7 @@ uv run --python 3.12 --with kiwipiepy python scripts/lexicon.py \
 ### 1. 파일 배치
 
 ```text
-user/
+openchat/
   Dockerfile
   docker-compose.yml
   .dockerignore
@@ -290,7 +290,7 @@ docker compose logs -f bot
 opencode server healthy
 discord ready
 registered slash commands
-user started
+openchat started
 ```
 
 ### 3. 업데이트
@@ -323,9 +323,9 @@ npm run db:import -- ./export --channel <채널ID>
 `apt-get`과 `dnf`를 자동 감지합니다.
 
 ```bash
-scp -r . user@server:~/user     # 또는 git clone
+scp -r . user@server:~/openchat     # 또는 git clone
 ssh user@server
-cd ~/user
+cd ~/openchat
 sudo bash deploy/bootstrap.sh
 ```
 
@@ -335,25 +335,25 @@ sudo bash deploy/bootstrap.sh
 2. 기본 패키지 설치 (apt/dnf 자동)
 3. swap 2GB 생성 (없을 때만)
 4. Node.js 24 설치 (NodeSource deb/rpm)
-5. `user` 사용자, `/opt/user`, `/etc/user` 생성
+5. `openchat` 사용자, `/opt/openchat`, `/etc/openchat` 생성
 6. `opencode-ai@1.18.31` 전역 설치
 7. 소스 복사 후 `npm ci && npm run build`
-8. systemd 유닛 등록, `user.env` 생성 및 `OPENCODE_SERVER_PASSWORD` 자동 생성
+8. systemd 유닛 등록, `openchat.env` 생성 및 `OPENCODE_SERVER_PASSWORD` 자동 생성
 9. SELinux Enforcing 환경이면 컨텍스트 적용
 
 설치 후 안내되는 순서:
 
 ```bash
-sudo -u user -H opencode auth login
-sudo nano /etc/user/user.env
-sudo systemctl start user-opencode user-bot
-sudo journalctl -u user-bot -f
+sudo -u openchat -H opencode auth login
+sudo nano /etc/openchat/openchat.env
+sudo systemctl start openchat-opencode openchat-bot
+sudo journalctl -u openchat-bot -f
 ```
 
 업데이트:
 
 ```bash
-cd ~/user && git pull
+cd ~/openchat && git pull
 sudo bash deploy/update.sh
 ```
 
@@ -370,18 +370,18 @@ bash deploy/check-network.sh
 #### 1. 사용자와 디렉터리
 
 ```bash
-sudo useradd -r -m -d /home/user -s /bin/bash user
-sudo mkdir -p /opt/user /etc/user /opt/user/workspace
-sudo chown -R user:user /opt/user /home/user
+sudo useradd -r -m -d /home/openchat -s /bin/bash openchat
+sudo mkdir -p /opt/openchat /etc/openchat /opt/openchat/workspace
+sudo chown -R openchat:openchat /opt/openchat /home/openchat
 ```
 
 #### 2. 코드와 의존성
 
 ```bash
-sudo -u user git clone <repo> /opt/user
-cd /opt/user
-sudo -u user npm ci
-sudo -u user npm run build
+sudo -u openchat git clone <repo> /opt/openchat
+cd /opt/openchat
+sudo -u openchat npm ci
+sudo -u openchat npm run build
 ```
 
 #### 3. OpenCode CLI 설치
@@ -389,42 +389,42 @@ sudo -u user npm run build
 ```bash
 sudo npm install -g opencode-ai@1.18.31
 opencode --version
-sudo -u user opencode auth login
+sudo -u openchat opencode auth login
 ```
 
 #### 4. 환경 파일
 
 ```bash
-sudo cp .env /etc/user/user.env
-sudo chmod 600 /etc/user/user.env
-sudo chown root:root /etc/user/user.env
+sudo cp .env /etc/openchat/openchat.env
+sudo chmod 600 /etc/openchat/openchat.env
+sudo chown root:root /etc/openchat/openchat.env
 ```
 
-`/etc/user/user.env`에 다음을 추가합니다.
+`/etc/openchat/openchat.env`에 다음을 추가합니다.
 
 ```env
 OPENCODE_BASE_URL=http://127.0.0.1:4096
 OPENCODE_SERVER_PASSWORD=<랜덤 문자열>
-DB_PATH=/opt/user/data/user.db
+DB_PATH=/opt/openchat/data/openchat.db
 NODE_ENV=production
 ```
 
 #### 5. 서비스 등록
 
 ```bash
-sudo cp deploy/user-opencode.service deploy/user-bot.service /etc/systemd/system/
+sudo cp deploy/openchat-opencode.service deploy/openchat-bot.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now user-opencode user-bot
+sudo systemctl enable --now openchat-opencode openchat-bot
 ```
 
 #### 6. 상태 확인
 
 ```bash
-sudo systemctl status user-opencode user-bot
-sudo journalctl -u user-bot -f
+sudo systemctl status openchat-opencode openchat-bot
+sudo journalctl -u openchat-bot -f
 
 # OpenCode 서버는 Basic Auth 가 걸려 있으므로 인증이 필요하다
-PW=$(grep -E '^OPENCODE_SERVER_PASSWORD=.' /etc/user/user.env | cut -d= -f2-)
+PW=$(grep -E '^OPENCODE_SERVER_PASSWORD=.' /etc/openchat/openchat.env | cut -d= -f2-)
 curl -s -u "opencode:$PW" http://127.0.0.1:4096/global/health
 ```
 
@@ -621,28 +621,28 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 Discord에서:
 
 ```text
-/hiro status
-/hiro style-guilds
-/hiro tick
-/hiro rebuild-memory
-/hiro purge-sensitive
-/hiro forget confirm:true
-/hiro callme name:별명   # 봇이 나를 부르는 호칭 지정
-/hiro callme             # 호칭 초기화
+/openchat status
+/openchat style-guilds
+/openchat tick
+/openchat rebuild-memory
+/openchat purge-sensitive
+/openchat forget confirm:true
+/openchat callme name:별명   # 봇이 나를 부르는 호칭 지정
+/openchat callme             # 호칭 초기화
 ```
 
 채널별 기능은 분리해서 켜고 끌 수 있습니다.
 
 ```text
-/hiro set-channel channel:#채널 collector:true spontaneous:false   # 수집만
-/hiro set-channel channel:#채널 collector:false spontaneous:true   # 자동 발화만
-/hiro set-channel channel_id:<ID> collector:true                   # 포럼/스레드는 ID로
-/hiro channels                                                     # 채널별 설정 보기
-/hiro enable-channel channel:#채널     # 수집+자동 발화 모두 켜기 (단축)
-/hiro disable-channel channel:#채널    # 수집+자동 발화 모두 끄기 (단축)
+/openchat set-channel channel:#채널 collector:true spontaneous:false   # 수집만
+/openchat set-channel channel:#채널 collector:false spontaneous:true   # 자동 발화만
+/openchat set-channel channel_id:<ID> collector:true                   # 포럼/스레드는 ID로
+/openchat channels                                                     # 채널별 설정 보기
+/openchat enable-channel channel:#채널     # 수집+자동 발화 모두 켜기 (단축)
+/openchat disable-channel channel:#채널    # 수집+자동 발화 모두 끄기 (단축)
 ```
 
-호칭(`/hiro callme`)은 관리자가 아니어도 사용할 수 있으며, 사용자별로 DB(`user_aliases`)에 저장됩니다. 멘션 응답과 자동 발화의 프롬프트에서 `username`(핸들) 대신 이 호칭으로 표시됩니다. 최대 32자, `<`, `>`, `@`, `#`, `` ` `` 문자는 사용할 수 없습니다.
+호칭(`/openchat callme`)은 관리자가 아니어도 사용할 수 있으며, 사용자별로 DB(`user_aliases`)에 저장됩니다. 멘션 응답과 자동 발화의 프롬프트에서 `username`(핸들) 대신 이 호칭으로 표시됩니다. 최대 32자, `<`, `>`, `@`, `#`, `` ` `` 문자는 사용할 수 없습니다.
 
 서버에서:
 
@@ -652,7 +652,7 @@ docker compose restart bot
 docker compose down
 
 # systemd
-sudo systemctl restart user-bot
+sudo systemctl restart openchat-bot
 ```
 
 ## 백업과 보관
@@ -661,15 +661,15 @@ sudo systemctl restart user-bot
 
 | 경로 | 내용 |
 |---|---|
-| `data/user.db` | 메시지·말투 프로필·생성 기록 |
+| `data/openchat.db` | 메시지·말투 프로필·생성 기록 |
 | `secrets/opencode/auth.json` | OpenCode 인증 |
 | `data/opencode-workspace` | OpenCode 작업 디렉터리 |
 
 SQLite는 WAL 모드이므로 파일 복사 전에 체크포인트를 권장합니다.
 
 ```bash
-sqlite3 data/user.db "PRAGMA wal_checkpoint(TRUNCATE);"
-cp data/user.db "backup/user-$(date +%F).db"
+sqlite3 data/openchat.db "PRAGMA wal_checkpoint(TRUNCATE);"
+cp data/openchat.db "backup/openchat-$(date +%F).db"
 ```
 
 ## 보안 체크리스트

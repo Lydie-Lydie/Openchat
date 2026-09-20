@@ -37,6 +37,7 @@ export type OpenCodeOptions = {
   readonly username: string;
   readonly password: string | undefined;
   readonly timeoutMs: number;
+  readonly sessionTitle: string;
   readonly logger: Logger;
 };
 
@@ -103,7 +104,7 @@ export const createOpenCodeGateway = (options: OpenCodeOptions): OpenCodeGateway
       const parsed = parseModel(input.model);
 
       const created = await client.session.create({
-        title: "hiro",
+        title: options.sessionTitle,
         model: { id: parsed.modelID, providerID: parsed.providerID },
       });
       if (created.error) throw new Error(describeError(created.error));

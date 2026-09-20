@@ -41,9 +41,14 @@ const envSchema = z.object({
   OPENCODE_MODEL_STYLE_SUMMARY: z.string().optional(),
   OPENCODE_TIMEOUT_MS: z.coerce.number().int().positive().default(120_000),
 
-  DB_PATH: z.string().default("./data/user.db"),
+  DB_PATH: z.string().default("./data/openchat.db"),
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  BOT_NAME: z.string().min(1).default("openchat"),
+  COMMAND_NAME: z
+    .string()
+    .regex(/^[-_\p{L}\p{N}]{1,32}$/u, "COMMAND_NAME must be 1-32 word characters")
+    .default("openchat"),
 
   DRY_RUN: booleanish.default("true"),
   SPONTANEOUS_ENABLED: booleanish.default("false"),
@@ -66,6 +71,8 @@ const envSchema = z.object({
 });
 
 export type AppConfig = {
+  readonly botName: string;
+  readonly commandName: string;
   readonly discord: {
     readonly token: string;
     readonly appId: string;
@@ -163,6 +170,8 @@ export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig =
   const mentionAllowedUserIds = env.MENTION_ALLOWED_USER_IDS;
 
   return {
+    botName: env.BOT_NAME,
+    commandName: env.COMMAND_NAME,
     discord: {
       token: env.DISCORD_TOKEN,
       appId: env.DISCORD_APP_ID,

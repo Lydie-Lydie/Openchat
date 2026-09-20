@@ -1,16 +1,16 @@
 [Unit]
-Description=user Discord bot
-After=network-online.target user-opencode.service
-Wants=network-online.target user-opencode.service
+Description=openchat Discord bot
+After=network-online.target openchat-opencode.service
+Wants=network-online.target openchat-opencode.service
 
 [Service]
 Type=simple
-User=user
-Group=user
-WorkingDirectory=/opt/user
-EnvironmentFile=/etc/user/user.env
+User=openchat
+Group=openchat
+WorkingDirectory=/opt/openchat
+EnvironmentFile=/etc/openchat/openchat.env
 Environment=NODE_ENV=production
-ExecStart=/usr/bin/node /opt/user/dist/index.js
+ExecStart=/usr/bin/node /opt/openchat/dist/index.js
 Restart=always
 RestartSec=5
 NoNewPrivileges=true

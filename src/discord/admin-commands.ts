@@ -35,10 +35,10 @@ export type AdminCommands = {
   handle(interaction: ChatInputCommandInteraction): Promise<void>;
 };
 
-const buildCommand = (styleLearningEnabled: boolean) => {
+const buildCommand = (styleLearningEnabled: boolean, commandName: string) => {
   const builder = new SlashCommandBuilder()
-    .setName("hiro")
-    .setDescription("hiro 봇 관리")
+    .setName(commandName)
+    .setDescription(`${commandName} 봇 관리`)
     .addSubcommand((s) => s.setName("status").setDescription("현재 상태를 확인합니다"))
     .addSubcommand((s) => s.setName("pause").setDescription("자동 발화를 중지합니다"))
     .addSubcommand((s) => s.setName("resume").setDescription("자동 발화를 재개합니다"))
@@ -206,7 +206,7 @@ export const createAdminCommands = (deps: {
     refreshEmojis,
   } = deps;
 
-  const command = buildCommand(config.runtime.styleLearningEnabled);
+  const command = buildCommand(config.runtime.styleLearningEnabled, config.commandName);
 
   const isAdmin = (interaction: ChatInputCommandInteraction): boolean =>
     config.discord.adminUserIds.includes(interaction.user.id);
@@ -232,7 +232,7 @@ export const createAdminCommands = (deps: {
 
     async handle(interaction) {
       if (!interaction.isChatInputCommand()) return;
-      if (interaction.commandName !== "hiro") return;
+      if (interaction.commandName !== config.commandName) return;
 
       const sub = interaction.options.getSubcommand();
 
@@ -380,7 +380,7 @@ export const createAdminCommands = (deps: {
                   )
                 : ["  (없음)"]),
               "",
-              "다른 서버로 참조를 옮기려면 STYLE_GUILD_IDS를 바꾸고 재시작한 뒤 /user rebuild-memory 하세요.",
+              `다른 서버로 참조를 옮기려면 STYLE_GUILD_IDS를 바꾸고 재시작한 뒤 /${config.commandName} rebuild-memory 하세요.`,
             ];
             await interaction.editReply({ content: lines.join("\n") });
             return;

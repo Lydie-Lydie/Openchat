@@ -7,6 +7,8 @@ import {
   validateOutgoing,
 } from "../../src/safety/filters.js";
 
+const BOT_APP_ID = "000000000000000000";
+
 describe("filters", () => {
   it("detects sensitive patterns", () => {
     expect(containsSensitiveData("내 번호 010-1234-5678 이야")).toBe(true);
@@ -23,7 +25,7 @@ describe("filters", () => {
     expect(isChatLike("ㅇㅇ")).toBe(true);
     expect(isChatLike("그건 좀 애매한데 ㅋㅋ")).toBe(true);
     expect(isChatLike("지금 뭐해?")).toBe(true);
-    expect(isChatLike("<@123456789012345678> 안녕 오늘 뭐 먹을래?")).toBe(true);
+    expect(isChatLike(`<@${BOT_APP_ID}> 안녕 오늘 뭐 먹을래?`)).toBe(true);
     expect(isChatLike("```code block```")).toBe(false);
     expect(isChatLike("https://example.com")).toBe(false);
     expect(isChatLike("Account:ivub AccountPassword:zau9")).toBe(false);

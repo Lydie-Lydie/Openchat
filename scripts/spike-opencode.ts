@@ -19,6 +19,7 @@ const gateway = createOpenCodeGateway({
   username: process.env.OPENCODE_SERVER_USERNAME ?? "opencode",
   password: process.env.OPENCODE_SERVER_PASSWORD,
   timeoutMs: 120_000,
+  sessionTitle: process.env.BOT_NAME ?? "openchat",
   logger,
 });
 

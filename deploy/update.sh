@@ -2,8 +2,8 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-user_USER="${user_USER:-user}"
-APP_DIR="/opt/user"
+APP_USER="${APP_USER:-openchat}"
+APP_DIR="/opt/openchat"
 
 log() { printf '\n\033[1;36m==> %s\033[0m\n' "$1"; }
 die() { printf '\n\033[1;31mERROR: %s\033[0m\n' "$1" >&2; exit 1; }
@@ -14,7 +14,7 @@ fi
 
 if [ -d "$REPO_DIR/.git" ]; then
   log "git pull"
-  sudo -u "$user_USER" -H git -C "$REPO_DIR" pull --ff-only
+  sudo -u "$APP_USER" -H git -C "$REPO_DIR" pull --ff-only
 fi
 
 log "소스 동기화"
@@ -24,17 +24,17 @@ done
 rm -rf "$APP_DIR/src" "$APP_DIR/scripts"
 cp -r "$REPO_DIR/src" "$APP_DIR/src"
 cp -r "$REPO_DIR/scripts" "$APP_DIR/scripts"
-chown -R "$user_USER:$user_USER" "$APP_DIR"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 log "의존성 설치 및 빌드"
-sudo -u "$user_USER" -H bash -lc "cd '$APP_DIR' && npm ci --no-audit --no-fund >/dev/null && npm run build >/dev/null"
+sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && npm ci --no-audit --no-fund >/dev/null && npm run build >/dev/null"
 
 log "서비스 재시작"
-systemctl restart user-opencode
+systemctl restart openchat-opencode
 sleep 2
-systemctl restart user-bot
+systemctl restart openchat-bot
 sleep 3
 
 log "상태"
-systemctl --no-pager status user-opencode user-bot | sed -n '1,20p' || true
-journalctl -u user-bot -n 15 --no-pager || true
+systemctl --no-pager status openchat-opencode openchat-bot | sed -n '1,20p' || true
+journalctl -u openchat-bot -n 15 --no-pager || true

@@ -38,6 +38,7 @@ const main = async (): Promise<void> => {
     username: config.opencode.username,
     password: config.opencode.password,
     timeoutMs: config.opencode.timeoutMs,
+    sessionTitle: config.botName,
     logger,
   });
 

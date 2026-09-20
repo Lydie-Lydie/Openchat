@@ -130,7 +130,7 @@ export const createDiscordClient = (deps: {
         return sent.id;
       }
       const created = await forum.threads.create({
-        name: `hiro ${new Date().toISOString().slice(0, 10)}`,
+        name: `${config.botName} ${new Date().toISOString().slice(0, 10)}`,
         message: { content },
       });
       return created.id;
