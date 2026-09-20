@@ -166,8 +166,11 @@ export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig =
   const styleGuildIds =
     env.STYLE_GUILD_IDS.length > 0 ? env.STYLE_GUILD_IDS : allowedGuildIds;
 
-  // Empty = any user may trigger mentions (matches .env.example and isMentionUserAllowed).
-  const mentionAllowedUserIds = env.MENTION_ALLOWED_USER_IDS;
+  // Empty MENTION_ALLOWED_USER_IDS = only SELF_USER_ID and ADMIN_USER_IDS may trigger mentions.
+  const mentionAllowedUserIds =
+    env.MENTION_ALLOWED_USER_IDS.length > 0
+      ? env.MENTION_ALLOWED_USER_IDS
+      : [...new Set([env.SELF_USER_ID, ...env.ADMIN_USER_IDS])];
 
   return {
     botName: env.BOT_NAME,

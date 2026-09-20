@@ -2,6 +2,8 @@ import type { AppConfig } from "../src/config.js";
 
 export const makeConfig = (overrides: Partial<AppConfig> = {}): AppConfig => {
   const base: AppConfig = {
+    botName: "openchat",
+    commandName: "openchat",
     discord: {
       token: "token",
       appId: "app",
@@ -13,6 +15,7 @@ export const makeConfig = (overrides: Partial<AppConfig> = {}): AppConfig => {
       styleChannelIds: [],
       mentionAllowedUserIds: ["self", "admin"],
       mentionGlobalPerMin: 20,
+      mentionReplyInline: true,
       emojiEnabled: true,
       emojiMax: 30,
     },
@@ -39,6 +42,14 @@ export const makeConfig = (overrides: Partial<AppConfig> = {}): AppConfig => {
       nodeEnv: "test",
       dryRun: true,
       retentionDays: 30,
+      styleLearningEnabled: true,
+      lexiconEnabled: true,
+      lexiconPath: "./data/lexicon.json",
+      personaEnabled: true,
+      personaPath: "./data/persona.md",
+      personaPrompt: "",
+      personaAutoEnabled: true,
+      personaAutoPath: "./data/persona.auto.md",
     },
     spontaneous: {
       enabled: true,

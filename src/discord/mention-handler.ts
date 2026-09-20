@@ -253,7 +253,12 @@ export const createMentionHandler = (deps: {
       }
 
       const chunks = chunkMessage(replyText);
-      const sendFn = await resolveSendFn(message, logger, config.discord.mentionReplyInline);
+      const sendFn = await resolveSendFn(
+        message,
+        logger,
+        config.discord.mentionReplyInline,
+        config.botName,
+      );
 
       let firstSentId: string | null = null;
       for (const chunk of chunks) {
@@ -288,6 +293,7 @@ const resolveSendFn = async (
   message: Message,
   logger: Logger,
   inline: boolean,
+  botName: string,
 ): Promise<SendFn> => {
   const channel = message.channel;
 
@@ -306,7 +312,7 @@ const resolveSendFn = async (
   if (typeof message.startThread === "function") {
     try {
       const thread = await message.startThread({
-        name: `${config.botName} · ${message.author.username}`.slice(0, 90),
+        name: `${botName} · ${message.author.username}`.slice(0, 90),
         autoArchiveDuration: 1440,
       });
       logger.debug({ threadId: thread.id }, "created thread for mention reply");

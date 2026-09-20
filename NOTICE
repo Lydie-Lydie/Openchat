@@ -14,3 +14,29 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+
+============================================================================
+Third-party notices
+============================================================================
+
+Kiwipiepy / Kiwi (Korean morphological analyzer)
+----------------------------------------------------------------------------
+- 저작자: bab2min 및 기여자
+- 라이선스: Apache License 2.0
+- Kiwi는 Apache License 2.0 라이선스로 배포됩니다. 자세한 내용은 LICENSE를 참고해주세요.
+- 학습된 모델 파일 또한 동일한 라이선스로 배포됩니다. 모델 학습에는 국립국어원의
+  21세기 세종계획 말뭉치와 모두의 말뭉치를 사용했으며, 원본 말뭉치 자체는 Kiwi와
+  함께 배포되지 않습니다. 자세한 내용은 NOTICE를 참고해주세요.
+- 기존에 배포된 0.23.2 이하 버전은 LGPL 라이선스로 배포되었으며, 해당 버전에는
+  계속 LGPL이 적용됩니다.
+- 이메일: bab2min@gmail.com
+- 블로그: http://bab2min.tistory.com/560
+
+This project invokes Kiwipiepy via `uv run --with kiwipiepy` at runtime to build
+the optional lexical profile (scripts/lexicon.py). It does NOT bundle or
+redistribute Kiwi or its model files/corpora.
+
+----------------------------------------------------------------------------
+Other dependencies (discord.js, @opencode-ai/sdk, pino, zod, dotenv, etc.) are
+distributed under their own licenses; see each package for details.

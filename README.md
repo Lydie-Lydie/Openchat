@@ -132,3 +132,4 @@ Apache License 2.0. 전체 내용은 `LICENSE`, 저작자 표시는 `NOTICE`를 
 
 - 저작권: Copyright 2026 openchat
 - 요구사항: 저작권 고지와 `NOTICE`를 유지하고, **변경한 경우 변경 사실을 명시**해야 합니다(Apache-2.0 제4조).
+- 서드파티: 한국어 형태소 분석기 **Kiwi(kiwipiepy)** 는 Apache-2.0(0.23.2 이하는 LGPL)이며, 학습 말뭉치(21세기 세종계획·모두의 말뭉치)는 재배포하지 않습니다. 자세한 표시는 `NOTICE`를 참고하세요.

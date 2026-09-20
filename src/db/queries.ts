@@ -158,7 +158,7 @@ export const searchMessages = (db: Db, query: SearchMessagesQuery): MessageRow[]
          WHERE messages_fts MATCH ? AND ${clauses.join(" AND ")}
          ORDER BY bm25(messages_fts) LIMIT ?`,
       )
-      .all(...params, phrase, query.limit) as unknown as MessageRow[];
+      .all(phrase, ...params, query.limit) as unknown as MessageRow[];
     if (rows.length > 0) return rows;
   }
 
