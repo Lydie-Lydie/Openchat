@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_USER="${APP_USER:-openchat}"
-user_HOME="/home/${APP_USER}"
+APP_HOME="/home/${APP_USER}"
 APP_DIR="/opt/openchat"
 CONF_DIR="/etc/openchat"
 ENV_FILE="${CONF_DIR}/openchat.env"
@@ -67,13 +67,13 @@ ok "node $(node -v) / npm $(npm -v)"
 
 log "5/9 사용자 및 디렉터리"
 if ! id -u "$APP_USER" >/dev/null 2>&1; then
-  useradd -m -d "$user_HOME" -s /bin/bash "$APP_USER"
+  useradd -m -d "$APP_HOME" -s /bin/bash "$APP_USER"
 fi
 mkdir -p "$APP_DIR" "$CONF_DIR" "$APP_DIR/workspace" "$APP_DIR/data"
-mkdir -p "$user_HOME/.local/share" "$user_HOME/.local/state" "$user_HOME/.cache" "$user_HOME/.config"
-chown -R "$APP_USER:$APP_USER" "$APP_DIR" "$user_HOME"
-chmod 700 "$user_HOME" "$user_HOME/.local" "$user_HOME/.local/state"
-if command -v restorecon >/dev/null 2>&1; then restorecon -R "$user_HOME" >/dev/null 2>&1 || true; fi
+mkdir -p "$APP_HOME/.local/share" "$APP_HOME/.local/state" "$APP_HOME/.cache" "$APP_HOME/.config"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR" "$APP_HOME"
+chmod 700 "$APP_HOME" "$APP_HOME/.local" "$APP_HOME/.local/state"
+if command -v restorecon >/dev/null 2>&1; then restorecon -R "$APP_HOME" >/dev/null 2>&1 || true; fi
 ok "$APP_USER / $APP_DIR"
 
 log "6/9 OpenCode CLI"
@@ -123,10 +123,10 @@ chmod 600 "$ENV_FILE"
 chown root:root "$ENV_FILE"
 ok "$ENV_FILE 준비"
 
-if [ -n "${user_AUTH_JSON:-}" ] && [ -f "${user_AUTH_JSON}" ]; then
-  install -d -o "$APP_USER" -g "$APP_USER" -m 700 "$user_HOME/.local/share/opencode"
-  install -o "$APP_USER" -g "$APP_USER" -m 600 "$user_AUTH_JSON" \
-    "$user_HOME/.local/share/opencode/auth.json"
+if [ -n "${APP_AUTH_JSON:-}" ] && [ -f "${APP_AUTH_JSON}" ]; then
+  install -d -o "$APP_USER" -g "$APP_USER" -m 700 "$APP_HOME/.local/share/opencode"
+  install -o "$APP_USER" -g "$APP_USER" -m 600 "$APP_AUTH_JSON" \
+    "$APP_HOME/.local/share/opencode/auth.json"
   ok "auth.json 복사"
 fi
 

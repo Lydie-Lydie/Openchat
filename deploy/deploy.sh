@@ -2,16 +2,16 @@
 set -euo pipefail
 
 # 로컬에서 실행: 저장소를 서버로 동기화한 뒤 원격 update.sh 를 돌린다.
-#   user_HOST=root@64.177.47.245 bash deploy/deploy.sh
+#   APP_HOST=user@your-server bash deploy/deploy.sh
 #
 # --delete 를 사용하므로 서버에서 삭제된 파일도 반영된다.
 # node_modules/dist/data/secrets/.env 는 제외되어 보호된다.
 
-HOST="${user_HOST:-}"
-REMOTE_DIR="${user_REMOTE_DIR:-/root/openchat}"
+HOST="${APP_HOST:-}"
+REMOTE_DIR="${APP_REMOTE_DIR:-/root/openchat}"
 
 if [ -z "$HOST" ]; then
-  printf 'usage: user_HOST=user@server bash deploy/deploy.sh\n' >&2
+  printf 'usage: APP_HOST=user@server bash deploy/deploy.sh\n' >&2
   exit 1
 fi
 
