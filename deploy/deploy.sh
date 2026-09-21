@@ -5,7 +5,8 @@ set -euo pipefail
 #   APP_HOST=user@your-server bash deploy/deploy.sh
 #
 # --delete 를 사용하므로 서버에서 삭제된 파일도 반영된다.
-# node_modules/dist/data/secrets/.env 는 제외되어 보호된다.
+# node_modules/dist/data/secrets 와 .env* (예: .env.backup-*) 는 제외되어 보호된다.
+# .env.example 만 예외로 포함한다.
 
 HOST="${APP_HOST:-}"
 REMOTE_DIR="${APP_REMOTE_DIR:-/root/openchat}"
@@ -19,12 +20,15 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 printf '\n\033[1;36m==> sync %s -> %s:%s\033[0m\n' "$REPO_DIR" "$HOST" "$REMOTE_DIR"
 rsync -az --delete -e ssh \
+  --include '.env.example' \
+  --exclude '.env*' \
   --exclude node_modules \
   --exclude dist \
   --exclude data \
   --exclude secrets \
   --exclude .git \
-  --exclude .env \
+  --exclude '.DS_Store' \
+  --exclude '*.bak-*' \
   "$REPO_DIR/" "$HOST:$REMOTE_DIR/"
 
 printf '\n\033[1;36m==> remote update\033[0m\n'

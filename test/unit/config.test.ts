@@ -36,6 +36,13 @@ describe("loadConfig", () => {
     expect(loadConfig({ ...base }).discord.styleChannelIds).toEqual([]);
   });
 
+  it("defaults search off and parses SEARCH_ENABLED", () => {
+    expect(loadConfig({ ...base }).discord.searchEnabled).toBe(false);
+    expect(loadConfig({ ...base, SEARCH_ENABLED: "true" }).discord.searchEnabled).toBe(
+      true,
+    );
+  });
+
   it("defaults mention users to self plus admins", () => {
     const config = loadConfig({ ...base, ADMIN_USER_IDS: "a1,a2" });
     expect(config.discord.mentionAllowedUserIds).toEqual(["self", "a1", "a2"]);

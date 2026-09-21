@@ -27,6 +27,7 @@ const envSchema = z.object({
   MENTION_REPLY_INLINE: booleanish.default("true"),
   EMOJI_ENABLED: booleanish.default("true"),
   EMOJI_MAX: z.coerce.number().int().positive().default(30),
+  SEARCH_ENABLED: booleanish.default("false"),
 
   COLLECTOR_CHANNEL_IDS: z.string().default("").transform(csv),
   SPONTANEOUS_CHANNEL_IDS: z.string().default("").transform(csv),
@@ -87,6 +88,7 @@ export type AppConfig = {
     readonly mentionReplyInline: boolean;
     readonly emojiEnabled: boolean;
     readonly emojiMax: number;
+    readonly searchEnabled: boolean;
   };
   readonly channels: {
     readonly collectorIds: readonly string[];
@@ -189,6 +191,7 @@ export const loadConfig = (source: NodeJS.ProcessEnv = process.env): AppConfig =
       mentionReplyInline: env.MENTION_REPLY_INLINE,
       emojiEnabled: env.EMOJI_ENABLED,
       emojiMax: env.EMOJI_MAX,
+      searchEnabled: env.SEARCH_ENABLED,
     },
     channels: {
       collectorIds: env.COLLECTOR_CHANNEL_IDS,

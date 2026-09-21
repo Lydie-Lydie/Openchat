@@ -1,15 +1,20 @@
 [Unit]
 Description=OpenCode headless server (openchat)
-After=network-online.target
+After=network-online.target openchat-egress.service
 Wants=network-online.target
+# Fail closed: never run with web tools while the egress filter is missing.
+Requires=openchat-egress.service
 
 [Service]
 Type=simple
-User=openchat
-Group=openchat
+# Runs as a separate user from the bot so the egress filter
+# (openchat-egress.service) can block this process from reaching loopback,
+# link-local and private ranges.
+User=openchat-oc
+Group=openchat-oc
 WorkingDirectory=/opt/openchat/workspace
 EnvironmentFile=/etc/openchat/openchat.env
-Environment=HOME=/home/openchat
+Environment=HOME=/home/openchat-oc
 ExecStart=/usr/local/bin/opencode serve --hostname 127.0.0.1 --port 4096
 Restart=always
 RestartSec=5

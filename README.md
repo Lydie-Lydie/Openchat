@@ -13,6 +13,11 @@
 - **페르소나**: 수동 `data/persona.md` + 자동 추출 `data/persona.auto.md`(말투 분석 시 함께 생성).
 - **자동 발화**(선택): 채널별 스케줄러, dry-run/조용시간/최소간격/일일한도.
 - **반복 방지**: 최근 답변을 프롬프트에 넣고 유사도 검사로 중복 시 재생성.
+- **웹 검색**(선택, 기본 OFF): 내부 자료로 답할 수 없을 때만 OpenCode의 `websearch`/`webfetch` 도구 사용(`SEARCH_ENABLED`).
+  - OpenCode 1.18.31은 fetch URL 제한을 지원하지 않으므로 **네트워크 레벨로 차단**합니다. `opencode serve`를 봇과 다른 사용자로 실행하고 `openchat-egress.service`가 그 uid의 loopback(신규 연결만)·link-local(`169.254.0.0/16`, 클라우드 메타데이터)·사설 대역 egress를 막습니다. 봇은 다른 uid라 `127.0.0.1:4096` 통신에 영향이 없습니다.
+  - 프롬프트는 도구 출력을 **신뢰할 수 없는 데이터**로 취급하도록 지시합니다(인젝션 방어).
+  - 잔여 위험: 허용된 공개 도메인으로 컨텍스트를 URL에 실어 보내는 유출은 여전히 가능하므로, 통제하지 않는 서버에서는 켜지 마세요. 자세한 내용은 `src/opencode/tools.ts`.
+- **반응 컨텍스트**: 최근 메시지의 이모지 반응과 반응한 사람을 컨텍스트에 포함(메모리만, DB 미저장).
 - **사용자별 호칭**: `/openchat callme`로 봇이 부르는 이름 지정.
 - **채널 기능 분리**: 수집과 자동 발화를 채널별로 개별 ON/OFF, 포럼/스레드 지원.
 
@@ -70,6 +75,8 @@ npm run lexicon
 | `PERSONA_AUTO_ENABLED`, `PERSONA_AUTO_PATH` | 자동 추출 페르소나 |
 | `MENTION_REPLY_INLINE` | `true`면 채널 인라인 답장(기본), `false`면 스레드 생성 |
 | `MENTION_GLOBAL_PER_MIN` | 전역 멘션 레이트리밋 |
+| `EMOJI_ENABLED`, `EMOJI_MAX` | 서버 커스텀 이모지 사용 |
+| `SEARCH_ENABLED` | 내부 자료로 답할 수 없을 때 웹 검색 (egress 필터 필요) |
 | `OPENCODE_BASE_URL`, `OPENCODE_SERVER_USERNAME/PASSWORD` | OpenCode 서버 접속 |
 | `OPENCODE_MODEL*`, `OPENCODE_TIMEOUT_MS` | 모델/타임아웃 |
 | `DB_PATH`, `RETENTION_DAYS`, `TZ` | DB 경로/보존/시간대 |

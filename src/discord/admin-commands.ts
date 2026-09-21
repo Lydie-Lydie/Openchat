@@ -27,6 +27,7 @@ import {
 } from "../db/queries.js";
 import { formatDateTime } from "../util/time.js";
 import { purgeSecretMessages } from "../jobs/redact.js";
+import { reactionCacheSize } from "./reactions.js";
 import type { SpontaneousOutcome } from "../spontaneous/generator.js";
 import { normalizeAlias } from "./alias.js";
 
@@ -259,6 +260,8 @@ export const createAdminCommands = (deps: {
               `자동 발화 일시중지: ${state.spontaneousPaused ? "ON" : "OFF"}`,
               `자동 발화 기능: ${config.spontaneous.enabled ? "ON" : "OFF"}`,
               `말투 학습: ${config.runtime.styleLearningEnabled ? "ON" : "OFF"}`,
+              `웹 검색: ${config.discord.searchEnabled ? "ON (egress 필터 필요)" : "OFF"}`,
+              `반응 캐시: ${reactionCacheSize()}개 메시지`,
               `모델: ${config.opencode.models.default}`,
               `수집 메시지: 총 ${stats.total} (본인 ${stats.self}, 채널 ${stats.channels})`,
               `오늘 API 호출: ${usage.calls}건, 실패 ${usage.failures}건, 비용 $${usage.cost.toFixed(4)}`,

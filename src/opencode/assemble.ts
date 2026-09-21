@@ -69,6 +69,7 @@ export const assembleMentionPrompt = (deps: {
       ? { recentReplies: deps.recentReplies }
       : {}),
     ...(persona ? { persona } : {}),
+    ...(config.discord.searchEnabled ? { search: true } : {}),
     ...(profile && config.runtime.styleLearningEnabled ? { styleProfile: profile.summary } : {}),
     ...(lexicon ? { lexicon } : {}),
     styleSamples: samples,

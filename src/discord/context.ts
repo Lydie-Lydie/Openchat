@@ -9,15 +9,41 @@ import type { ContextMessage } from "../opencode/prompts.js";
 import { formatClock } from "../util/time.js";
 
 export type NameResolver = (message: Message) => string;
+export type ReactionResolver = (messageId: string) => string | undefined;
+
+const emojiTokenOf = (emoji: {
+  id: string | null;
+  name: string | null;
+  animated?: boolean | null;
+}): string => {
+  if (emoji.id) {
+    return emoji.animated ? `<a:${emoji.name}:${emoji.id}>` : `<:${emoji.name}:${emoji.id}>`;
+  }
+  return emoji.name ?? "?";
+};
+
+/** Count-only summary from the REST payload, used when the gateway cache has nothing. */
+const fallbackReactions = (message: Message): string | undefined => {
+  const cache = message.reactions?.cache;
+  if (!cache || cache.size === 0) return undefined;
+  return [...cache.values()]
+    .map((reaction) => `${emojiTokenOf(reaction.emoji)}×${reaction.count}`)
+    .join(" ");
+};
 
 export const toContextMessage = (
   message: Message,
   nameOf?: NameResolver,
-): ContextMessage => ({
-  author: nameOf ? nameOf(message) : message.author.username,
-  content: message.content.replace(/\s+/gu, " ").trim(),
-  at: formatClock(message.createdAt),
-});
+  reactionsOf?: ReactionResolver,
+): ContextMessage => {
+  const reactions = reactionsOf?.(message.id) ?? fallbackReactions(message);
+  return {
+    author: nameOf ? nameOf(message) : message.author.username,
+    content: message.content.replace(/\s+/gu, " ").trim(),
+    at: formatClock(message.createdAt),
+    ...(reactions ? { reactions } : {}),
+  };
+};
 
 export const isForumLike = (channel: Channel): boolean =>
   channel.type === ChannelType.GuildForum || channel.type === ChannelType.GuildMedia;
@@ -40,6 +66,7 @@ export const fetchRecentContext = async (
   limit: number,
   nameOf?: NameResolver,
   excludeAuthorId?: string,
+  reactionsOf?: ReactionResolver,
 ): Promise<ContextMessage[]> => {
   let raw: Message[];
   if (isForumLike(channel)) {
@@ -55,5 +82,5 @@ export const fetchRecentContext = async (
     .filter((message) => message.content.trim().length > 0)
     .filter((message) => (excludeAuthorId ? message.author.id !== excludeAuthorId : true))
     .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
-    .map((message) => toContextMessage(message, nameOf));
+    .map((message) => toContextMessage(message, nameOf, reactionsOf));
 };

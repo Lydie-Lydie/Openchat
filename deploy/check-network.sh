@@ -44,4 +44,43 @@ else
 fi
 
 echo
-echo "결론: 위 'outbound IPv4 -> Discord' 가 ok 여야 봇이 동작합니다."
+echo "== 서비스 =="
+for svc in openchat-egress openchat-opencode openchat-bot; do
+  if systemctl is-active "$svc" >/dev/null 2>&1; then
+    pass "$svc active"
+  else
+    fail "$svc not active"
+  fi
+done
+
+echo
+echo "== egress 필터 (opencode 사용자) =="
+V4="$(iptables -S OUTPUT 2>/dev/null | grep -c 'uid-owner' || true)"
+V6="$(ip6tables -S OUTPUT 2>/dev/null | grep -c 'uid-owner' || true)"
+if [ "${V4:-0}" -gt 0 ]; then
+  pass "IPv4 OUTPUT 규칙 ${V4}개"
+else
+  fail "IPv4 OUTPUT 규칙 없음 (검색 사용 시 위험)"
+fi
+if [ "${V6:-0}" -gt 0 ]; then
+  pass "IPv6 OUTPUT 규칙 ${V6}개"
+else
+  fail "IPv6 OUTPUT 규칙 없음"
+fi
+
+OC_USER="${OC_USER:-${APP_USER:-openchat}-oc}"
+if id -u "$OC_USER" >/dev/null 2>&1; then
+  if sudo -u "$OC_USER" timeout 4 bash -c 'exec 3<>/dev/tcp/169.254.169.254/80' 2>/dev/null; then
+    fail "$OC_USER 가 메타데이터(169.254.169.254)에 접속됨 — 필터 확인 필요"
+  else
+    pass "$OC_USER 의 메타데이터 접속 차단됨"
+  fi
+  if sudo -u "$OC_USER" timeout 4 bash -c 'exec 3<>/dev/tcp/127.0.0.1/4096' 2>/dev/null; then
+    fail "$OC_USER 가 loopback:4096 에 신규 접속됨 — 필터 확인 필요"
+  else
+    pass "$OC_USER 의 loopback 신규 접속 차단됨"
+  fi
+fi
+
+echo
+echo "결론: 'outbound IPv4 -> Discord' ok, 'egress 필터' ok 여야 합니다."
