@@ -4,6 +4,9 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_USER="${APP_USER:-openchat}"
 APP_HOME="/home/${APP_USER}"
+# opencode runs as its own user so the egress filter can be scoped to it.
+OC_USER="${OC_USER:-${APP_USER}-oc}"
+OC_HOME="/home/${OC_USER}"
 APP_DIR="/opt/openchat"
 CONF_DIR="/etc/openchat"
 ENV_FILE="${CONF_DIR}/openchat.env"
@@ -71,10 +74,24 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
 fi
 mkdir -p "$APP_DIR" "$CONF_DIR" "$APP_DIR/workspace" "$APP_DIR/data"
 mkdir -p "$APP_HOME/.local/share" "$APP_HOME/.local/state" "$APP_HOME/.cache" "$APP_HOME/.config"
+
+if ! id -u "$OC_USER" >/dev/null 2>&1; then
+  useradd -m -d "$OC_HOME" -s /bin/bash "$OC_USER"
+fi
+mkdir -p "$OC_HOME/.local/share" "$OC_HOME/.local/state" "$OC_HOME/.cache" "$OC_HOME/.config"
+if [ -d "$APP_HOME/.local/share/opencode" ] && [ ! -d "$OC_HOME/.local/share/opencode" ]; then
+  cp -a "$APP_HOME/.local/share/opencode" "$OC_HOME/.local/share/opencode"
+fi
+chown -R "$OC_USER:$OC_USER" "$OC_HOME"
+chmod 700 "$OC_HOME"
+
 chown -R "$APP_USER:$APP_USER" "$APP_DIR" "$APP_HOME"
+chown -R "$OC_USER:$OC_USER" "$APP_DIR/workspace"
 chmod 700 "$APP_HOME" "$APP_HOME/.local" "$APP_HOME/.local/state"
-if command -v restorecon >/dev/null 2>&1; then restorecon -R "$APP_HOME" >/dev/null 2>&1 || true; fi
-ok "$APP_USER / $APP_DIR"
+if command -v restorecon >/dev/null 2>&1; then
+  restorecon -R "$APP_HOME" "$OC_HOME" >/dev/null 2>&1 || true
+fi
+ok "$APP_USER / $APP_DIR / opencode user $OC_USER"
 
 log "6/9 OpenCode CLI"
 if ! /usr/local/bin/opencode --version >/dev/null 2>&1; then
@@ -91,6 +108,9 @@ rm -rf "$APP_DIR/src" "$APP_DIR/scripts"
 cp -r "$REPO_DIR/src" "$APP_DIR/src"
 cp -r "$REPO_DIR/scripts" "$APP_DIR/scripts"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+# opencode(OC_USER) 가 workspace 에 쓸 수 있어야 하므로 전체 chown 뒤에 다시 지정한다.
+mkdir -p "$APP_DIR/workspace"
+chown -R "$OC_USER:$OC_USER" "$APP_DIR/workspace"
 sudo -u "$APP_USER" -H env "PATH=/usr/local/bin:/usr/bin:/bin" bash -c \
   "cd '$APP_DIR' && npm ci --no-audit --no-fund >/dev/null && NODE_OPTIONS=--max-old-space-size=512 npm run build >/dev/null"
 ok "빌드 완료"
@@ -123,17 +143,23 @@ chmod 600 "$ENV_FILE"
 chown root:root "$ENV_FILE"
 ok "$ENV_FILE 준비"
 
+# opencode 는 OC_USER 로 실행되므로 인증 파일도 그 홈에 둔다.
 if [ -n "${APP_AUTH_JSON:-}" ] && [ -f "${APP_AUTH_JSON}" ]; then
-  install -d -o "$APP_USER" -g "$APP_USER" -m 700 "$APP_HOME/.local/share/opencode"
-  install -o "$APP_USER" -g "$APP_USER" -m 600 "$APP_AUTH_JSON" \
-    "$APP_HOME/.local/share/opencode/auth.json"
-  ok "auth.json 복사"
+  install -d -o "$OC_USER" -g "$OC_USER" -m 700 "$OC_HOME/.local/share/opencode"
+  install -o "$OC_USER" -g "$OC_USER" -m 600 "$APP_AUTH_JSON" \
+    "$OC_HOME/.local/share/opencode/auth.json"
+  ok "auth.json 복사 (${OC_USER})"
 fi
 
-log "9/9 systemd 및 SELinux"
+log "9/9 systemd, SELinux 및 egress 필터"
 cp "$REPO_DIR/deploy/openchat-opencode.service" "$REPO_DIR/deploy/openchat-bot.service" /etc/systemd/system/
+install -m 755 "$REPO_DIR/deploy/openchat-egress-apply.sh" /usr/local/sbin/openchat-egress-apply
+printf 'OC_USER=%s\n' "$OC_USER" > "$CONF_DIR/egress.env"
+chmod 644 "$CONF_DIR/egress.env"
+cp "$REPO_DIR/deploy/openchat-egress.service" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable openchat-opencode openchat-bot >/dev/null 2>&1 || true
+systemctl enable openchat-opencode openchat-bot openchat-egress >/dev/null 2>&1 || true
+systemctl start openchat-egress || true
 
 if command -v getenforce >/dev/null 2>&1 && [ "$(getenforce)" = "Enforcing" ]; then
   # 유닛의 SELinuxContext=unconfined_service_t 가 동작하려면

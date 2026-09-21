@@ -1,5 +1,4 @@
 import {
-  ChannelType,
   Client,
   Events,
   GatewayIntentBits,
@@ -23,6 +22,14 @@ import { createAdminCommands } from "./admin-commands.js";
 import type { ContextMessage } from "../opencode/prompts.js";
 import type { SpontaneousOutcome } from "../spontaneous/generator.js";
 import { fetchRecentContext, isForumLike } from "./context.js";
+import {
+  clearReactionEmoji,
+  clearReactions,
+  formatReactionSummary,
+  reactionToken,
+  recordReactionAdd,
+  recordReactionRemove,
+} from "./reactions.js";
 import { collectGuildEmojis, type EmojiInfo } from "./emoji.js";
 
 export type DiscordBot = {
@@ -65,9 +72,10 @@ export const createDiscordClient = (deps: {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMessageReactions,
       GatewayIntentBits.MessageContent,
     ],
-    partials: [Partials.Message, Partials.Channel],
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction],
   });
 
   const emojiCache = new Map<string, EmojiInfo[]>();
@@ -141,6 +149,12 @@ export const createDiscordClient = (deps: {
     }
     const sent = await (channel as TextChannel | ThreadChannel).send(content);
     return sent.id;
+  };
+
+  const userNameOf = (userId: string): string => {
+    const alias = getUserAlias(db, userId);
+    if (alias) return alias;
+    return client.users.cache.get(userId)?.username ?? userId;
   };
 
   const collector = createCollector({ config, db, logger });
@@ -224,6 +238,28 @@ export const createDiscordClient = (deps: {
     });
   });
 
+  client.on(Events.MessageReactionAdd, (reaction, user) => {
+    if (user.bot) return;
+    if (!isGuildAllowed(config, reaction.message.guildId)) return;
+    recordReactionAdd(reaction.message.id, reactionToken(reaction), user.id);
+  });
+
+  client.on(Events.MessageReactionRemove, (reaction, user) => {
+    if (user.bot) return;
+    if (!isGuildAllowed(config, reaction.message.guildId)) return;
+    recordReactionRemove(reaction.message.id, reactionToken(reaction), user.id);
+  });
+
+  client.on(Events.MessageReactionRemoveEmoji, (reaction) => {
+    if (!isGuildAllowed(config, reaction.message.guildId)) return;
+    clearReactionEmoji(reaction.message.id, reactionToken(reaction));
+  });
+
+  client.on(Events.MessageReactionRemoveAll, (message) => {
+    if (!isGuildAllowed(config, message.guildId)) return;
+    clearReactions(message.id);
+  });
+
   client.on(Events.Error, (error) => {
     logger.error({ error: error.message }, "discord client error");
   });
@@ -250,6 +286,7 @@ export const createDiscordClient = (deps: {
         limit,
         (message) => getUserAlias(db, message.author.id) ?? message.author.username,
         config.discord.appId,
+        (messageId) => formatReactionSummary(messageId, userNameOf),
       );
     },
 

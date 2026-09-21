@@ -249,7 +249,11 @@ uv run --python 3.12 --with kiwipiepy python scripts/lexicon.py \
 - 결과는 `LEXICON_PATH`(기본 `./data/lexicon.json`)에 저장되고, 봇이 시작/프롬프트 생성 시 읽습니다(파일 mtime 기준 캐시).
 - 비활성화하려면 `LEXICON_ENABLED=false`.
 
-## 방법 A: Docker Compose (권장)
+## 방법 A: Docker Compose
+
+> ⚠️ **Docker 방식에는 egress 필터가 없습니다.** opencode 컨테이너가 임의 URL을 열 수 있으므로
+> 이 구성에서는 `SEARCH_ENABLED=false`를 유지하세요. 검색을 쓰려면 아래 **방법 B(systemd)** 를
+> 사용하세요. (`openchat-egress.service`가 사용자 단위 egress 차단을 담당합니다.)
 
 ### 1. 파일 배치
 
@@ -427,6 +431,35 @@ sudo journalctl -u openchat-bot -f
 PW=$(grep -E '^OPENCODE_SERVER_PASSWORD=.' /etc/openchat/openchat.env | cut -d= -f2-)
 curl -s -u "opencode:$PW" http://127.0.0.1:4096/global/health
 ```
+
+### egress 필터 (웹 검색 사용 시 필수)
+
+`SEARCH_ENABLED=true`면 모델이 `webfetch`로 임의 URL을 열 수 있습니다. OpenCode 1.18.31은
+URL 제한을 지원하지 않으므로 **네트워크 레벨로 차단**합니다.
+
+구성:
+
+- `opencode serve`를 봇과 **다른 사용자(`openchat-oc`)** 로 실행
+- `openchat-egress.service`가 그 uid의 egress를 차단
+  - `127.0.0.0/8`, `::1/128` — **신규 연결만** 차단 (기존 연결의 응답은 통과)
+  - `169.254.0.0/16` — 클라우드 메타데이터
+  - `10/8`, `172.16/12`, `192.168/16`, `100.64/10`, `fc00::/7`, `fe80::/10`
+
+봇은 다른 uid(`openchat`)이므로 `127.0.0.1:4096` 통신은 영향받지 않습니다.
+
+확인:
+
+```bash
+systemctl status openchat-egress
+iptables -S OUTPUT | grep uid-owner
+sudo -u openchat-oc curl -s -m 3 http://169.254.169.254/latest/meta-data/ ; echo "exit=$?"   # 실패해야 정상
+```
+
+프롬프트 인젝션은 별도로 `[보안]` 블록과 시스템 프롬프트에서 방어합니다
+(도구 출력을 지시가 아닌 데이터로 취급, 시스템·페르소나 인용 거부).
+
+`bootstrap.sh` / `update.sh`가 `openchat-oc` 사용자 생성, 상태 디렉터리 이전, 유닛 설치,
+egress 규칙 적용을 자동으로 수행합니다.
 
 ### SELinux (RHEL / Rocky / AlmaLinux)
 

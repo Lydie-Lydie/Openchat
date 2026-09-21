@@ -1,0 +1,16 @@
+[Unit]
+Description=openchat opencode egress filter (block private ranges for the opencode user)
+After=network-online.target firewalld.service
+Wants=network-online.target
+Before=openchat-opencode.service
+PartOf=openchat-opencode.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# bootstrap/update 가 실제 사용자 이름을 기록한다 (APP_USER 를 바꿔도 동작).
+EnvironmentFile=-/etc/openchat/egress.env
+ExecStart=/usr/local/sbin/openchat-egress-apply
+
+[Install]
+WantedBy=multi-user.target

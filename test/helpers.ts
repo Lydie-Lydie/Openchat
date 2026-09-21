@@ -18,6 +18,7 @@ export const makeConfig = (overrides: Partial<AppConfig> = {}): AppConfig => {
       mentionReplyInline: true,
       emojiEnabled: true,
       emojiMax: 30,
+      searchEnabled: false,
     },
     channels: {
       collectorIds: ["chan-1"],

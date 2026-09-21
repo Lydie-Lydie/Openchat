@@ -5,7 +5,7 @@ import type { Logger } from "../logger.js";
 import type { OpenCodeGateway } from "../opencode/client.js";
 import { MENTION_SYSTEM, type ContextMessage } from "../opencode/prompts.js";
 import { assembleMentionPrompt } from "../opencode/assemble.js";
-import { DISABLED_TOOLS } from "../opencode/tools.js";
+import { DISABLED_TOOLS, SEARCH_TOOLS } from "../opencode/tools.js";
 import {
   getChannelSettings,
   getUserAlias,
@@ -22,6 +22,7 @@ import {
 } from "./emoji.js";
 import { chunkMessage } from "./chunk.js";
 import { fetchRecentContext, toContextMessage } from "./context.js";
+import { formatReactionSummary } from "./reactions.js";
 import type { RateLimiter } from "../safety/rate-limit.js";
 import type { RuntimeState } from "../state.js";
 
@@ -63,6 +64,19 @@ export const createMentionHandler = (deps: {
   const nameOf = (message: Message): string =>
     getUserAlias(db, message.author.id) ?? message.author.username;
 
+  const reactionNamesFor =
+    (guild: Message["guild"]) =>
+    (userId: string): string => {
+      const alias = getUserAlias(db, userId);
+      if (alias) return alias;
+      return guild?.members.cache.get(userId)?.user.username ?? userId;
+    };
+
+  const reactionsOf =
+    (guild: Message["guild"]) =>
+    (messageId: string): string | undefined =>
+      formatReactionSummary(messageId, reactionNamesFor(guild));
+
   const collectReplyChain = async (
     message: Message,
     depth: number,
@@ -75,7 +89,7 @@ export const createMentionHandler = (deps: {
       if (!reference?.messageId) break;
       const target: Message | null = await current.fetchReference().catch(() => null);
       if (!target) break;
-      chain.unshift(toContextMessage(target, nameOf));
+      chain.unshift(toContextMessage(target, nameOf, reactionsOf(message.guild)));
       current = target;
     }
     return chain;
@@ -137,6 +151,7 @@ export const createMentionHandler = (deps: {
         15,
         nameOf,
         config.discord.appId,
+        reactionsOf(message.guild),
       ).catch(() => []);
       const replyContext = message.reference?.messageId
         ? await collectReplyChain(message, 3)
@@ -164,11 +179,12 @@ export const createMentionHandler = (deps: {
         await message.channel.sendTyping().catch(() => undefined);
       }
 
+      const searchEnabled = config.discord.searchEnabled;
       const generate = (extra?: string) =>
         gateway.generate({
           model: config.opencode.models.mention,
           system: MENTION_SYSTEM,
-          tools: DISABLED_TOOLS,
+          tools: searchEnabled ? SEARCH_TOOLS : DISABLED_TOOLS,
           prompt: extra ? `${prompt}\n\n${extra}` : prompt,
         });
 
